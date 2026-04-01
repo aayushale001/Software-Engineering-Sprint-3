@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hospital Platform Event Schemas",
+  "type": "object",
+  "properties": {
+    "appointment.hold.created": {
+      "type": "object",
+      "required": ["holdId", "doctorId", "patientId", "slotStart", "expiresAt"],
+      "properties": {
+        "holdId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "slotStart": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "appointment.confirmed": {
+      "type": "object",
+      "required": ["appointmentId", "doctorId", "patientId", "slotStart", "slotEnd", "status"],
+      "properties": {
+        "appointmentId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "slotStart": { "type": "string", "format": "date-time" },
+        "slotEnd": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" }
+      }
+    },
+    "appointment.cancelled": {
+      "type": "object",
+      "required": ["appointmentId", "doctorId", "patientId", "slotStart"],
+      "properties": {
+        "appointmentId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "slotStart": { "type": "string", "format": "date-time" }
+      }
+    },
+    "doctor.availability.updated": {
+      "type": "object",
+      "required": ["doctorId", "slotStart", "status"],
+      "properties": {
+        "doctorId": { "type": "string" },
+        "slotStart": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["available", "held", "booked"] },
+        "patientId": { "type": ["string", "null"] }
+      }
+    },
+    "medical_record.created": {
+      "type": "object",
+      "required": ["recordId", "patientId", "recordType", "recordDate", "createdAt"],
+      "properties": {
+        "recordId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "recordType": { "type": "string" },
+        "recordDate": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "notification.requested": {
+      "type": "object",
+      "required": ["notificationId", "channel", "destination", "template", "requestedAt"],
+      "properties": {
+        "notificationId": { "type": "string" },
+        "channel": { "type": "string", "enum": ["email", "sms"] },
+        "destination": { "type": "string" },
+        "template": { "type": "string" },
+        "data": { "type": "object" },
+        "requestedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "audit.event.logged": {
+      "type": "object",
+      "required": ["eventType", "actorType", "actorId", "occurredAt"],
+      "properties": {
+        "eventType": { "type": "string" },
+        "actorType": { "type": "string" },
+        "actorId": { "type": "string" },
+        "metadata": { "type": "object" },
+        "occurredAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

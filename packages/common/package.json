@@ -1,0 +1,25 @@
+{
+  "name": "@hospital/common",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@hospital/contracts": "0.1.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4",
+    "pg": "^8.13.3",
+    "pino": "^9.6.0",
+    "redis": "^5.0.0",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  }
+}
