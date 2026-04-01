@@ -1,150 +1,249 @@
-# Patient-Centric Hospital Platform (MVP Core)
+# Hospital Patient Portal - Sprint 3
 
-A microservice-based hospital platform focused on patient self-service with:
+This repository contains the Sprint 3 version of the Hospital Patient Portal project. The product is a patient-facing web portal backed by multiple Node.js microservices, with Sprint 3 focused on finishing the remaining backlog after the Sprint 2 MVP.
 
-- Dynamic appointment booking with strict slot hold/confirm semantics
-- Secure patient portal for personal medical records
-- Email OTP and Google OAuth sign-in
-- Real-time doctor availability updates over WebSocket
-- Event-driven stateless services with Kafka, retries, DLQs, and schema validation
-- API Gateway (Kong) with rate limiting, JWT auth, request tracing, and reverse proxy routing
-- PostgreSQL + Redis + Docker + Kubernetes + Terraform scaffolding
+## Sprint Summary
 
-## Tech Stack
+| Sprint | Focus | Outcome |
+| --- | --- | --- |
+| Sprint 1 | Requirements and backlog definition | Defined the core patient journey and prioritised MVP vs backlog items. |
+| Sprint 2 | MVP delivery | Implemented registration, secure sign-in, profile completion, doctor browsing, slot hold and confirm, and appointment viewing. |
+| Sprint 3 | Backlog completion | Added password recovery, dashboard summary, alternative login options, appointment cancellation, and medical records support. |
 
-- Frontend: React + Tailwind CSS + Vite + TanStack Query + Zustand
-- Backend: Node.js + Express + TypeScript
-- Database: PostgreSQL 16 using mostly raw SQL via `pg`
-- Messaging: Apache Kafka (event backbone) with schema-validated contracts and DLQs
-- Cache and locking: Redis 7
-- Gateway: Kong (declarative config with correlation IDs and request logging)
-- Email: SMTP via `notification-service` (Mailpit locally)
-- Infra: Docker Compose (local), Kubernetes manifests, Terraform (AWS)
+## Implemented Scope
+
+### Patient features
+
+- Register with email and password
+- Sign in with email and password
+- Request and verify OTP as a fallback sign-in flow
+- Start Google sign-in when `GOOGLE_OAUTH_*` variables are configured
+- Complete a required patient profile before using the full portal
+- Browse doctors and available appointment slots
+- Hold and confirm appointment slots
+- View booked appointments
+- Cancel appointments
+- View a dashboard summary with quick actions
+- Request a password reset link
+- Reset password from a secure tokenised link
+- View medical records
+- Create medical records
+- Update existing medical records
+
+### Extra capabilities beyond the Sprint 3 brief
+
+The codebase also includes staff-facing extensions that go beyond the patient portal stories in the sprint report:
+
+- Doctor login, schedule management, and patient access views
+- Admin staff invitations and staff management
+- Admin views for doctors, patients, appointments, and audit logs
+
+## Verified Sprint 3 Alignment
+
+The Sprint 3 backlog in the report is represented in the codebase:
+
+- Password reset request flow exists in `auth-service` and the patient `forgot-password` page.
+- Password reset completion flow exists in `auth-service` and the patient `reset-password` page.
+- Google sign-in and OTP fallback are both implemented in the auth service and patient login screen. Google OAuth is conditional on environment configuration.
+- Patient dashboard summary exists in the web app and pulls profile, appointments, and record counts.
+- Patient appointment cancellation exists in both the frontend and `appointment-service`.
+- Medical record viewing, creation, and updating exist in the frontend and `medical-records-service`.
+
+Implementation note:
+The medical records API supports replacing record entries on update. The current patient UI clearly supports viewing entries, creating records with entries, and editing record metadata; entry editing is better supported in the API layer than in the current form UI.
+
+## Architecture
+
+### Frontend
+
+- `apps/web`: React, Vite, Tailwind CSS, TanStack Query, Zustand
+
+### Backend services
+
+- `auth-service`: patient auth, OTP, Google OAuth, password reset, staff login
+- `patient-service`: patient profile and onboarding gate support
+- `doctor-service`: doctor directory, schedules, exceptions, doctor/admin tools
+- `availability-service`: appointment slot availability
+- `appointment-service`: hold, confirm, list, and cancel appointments
+- `medical-records-service`: patient records and record updates
+- `realtime-service`: WebSocket updates for live availability
+- `notification-service`: email notifications through SMTP or Mailpit
+- `audit-service`: audit log consumption and admin reporting support
+
+### Shared packages
+
+- `packages/common`: auth, DB, Redis, Kafka, HTTP, logging helpers
+- `packages/contracts`: event contracts and OpenAPI definitions
+
+### Infrastructure and ops
+
+- `docker-compose.yml`: local full-stack environment
+- `deploy/kong`: Kong gateway config
+- `deploy/k8s`: Kubernetes manifests
+- `infra/migrations`: database migrations and demo seed data
+- `infra/terraform`: infrastructure scaffolding
+- `ops/load-tests`: k6 load tests
 
 ## Repository Layout
 
-- `apps/web`: Patient-facing React app
-- `services/*`: Independent stateless microservices
-- `packages/common`: Shared backend utilities (auth, db, kafka, redis, http)
-- `packages/contracts`: OpenAPI and event contracts
-- `infra/migrations`: Knex-based SQL migrations and seed data
-- `deploy/kong`: Kong declarative gateway config
-- `deploy/k8s`: Kubernetes manifests and autoscaling configs
-- `infra/terraform`: AWS infrastructure scaffolding (EKS, Aurora, Redis, MSK, backup)
-- `ops/load-tests`: k6 load test scripts
+```text
+apps/
+  web/
+services/
+  auth-service/
+  patient-service/
+  doctor-service/
+  availability-service/
+  appointment-service/
+  medical-records-service/
+  realtime-service/
+  notification-service/
+  audit-service/
+packages/
+  common/
+  contracts/
+infra/
+  migrations/
+  terraform/
+deploy/
+  kong/
+  k8s/
+ops/
+  load-tests/
+```
 
-## Services and Ports
+## Quick Start With Docker
 
-- `auth-service` (3001)
-- `patient-service` (3002)
-- `doctor-service` (3003)
-- `availability-service` (3004)
-- `appointment-service` (3005)
-- `medical-records-service` (3006)
-- `realtime-service` (3007)
-- `notification-service` (3008)
-- `audit-service` (3009)
-- `kong` gateway (8000)
-- `web` frontend (5173)
+### 1. Install dependencies
 
-## Quick Start (Docker)
+```bash
+npm install --workspaces --include-workspace-root
+```
 
-1. Create `.env` from `.env.example` if needed.
-2. Start everything:
+### 2. Start the full stack
+
+To start the stack with seeded demo data:
+
+```bash
+SEED_DEMO_DATA=true npm run compose:up
+```
+
+If you do not need demo data:
 
 ```bash
 npm run compose:up
 ```
 
-3. Open:
+### 3. Open the local apps
 
 - Frontend: `http://localhost:5173`
 - API Gateway: `http://localhost:8000/api/v1`
 - Kong Admin API: `http://localhost:8001`
 - Mailpit Inbox: `http://localhost:8025`
 
-4. Demo login flow:
+### 4. Demo notes
 
-- Use `patient@example.com`
-- `POST /auth/request-otp` returns `devOtp` in non-production mode and sends the email to Mailpit locally
-- Google OAuth becomes available once `GOOGLE_OAUTH_*` env vars are configured
+- With `SEED_DEMO_DATA=true`, `patient@example.com` is seeded as a patient profile.
+- The seeded patient is best accessed through OTP fallback on the login page unless you first set a password through the reset-password flow.
+- In non-production mode, the OTP request response includes `devOtp`, and the same email is also visible in Mailpit.
+- Google sign-in only works after `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `GOOGLE_OAUTH_REDIRECT_URI` are configured.
 
-## Local Development (without Docker for services)
+## Local Development Without Docker For Every Service
 
-1. Install dependencies:
+Start the infrastructure dependencies:
+
+```bash
+docker compose up -d postgres redis zookeeper kafka mailpit
+```
+
+Install packages:
 
 ```bash
 npm install --workspaces --include-workspace-root
 ```
 
-2. Start dependencies (`postgres`, `redis`, `kafka`) via Docker Compose or managed services.
-
-3. Run migrations and seed:
+Run migrations:
 
 ```bash
 npm run migrate
+```
+
+Optional demo seed:
+
+```bash
 npm run seed
 ```
 
-4. Start backend and frontend:
+Start the frontend and backend workspaces:
 
 ```bash
 npm run dev
 ```
 
-## Core API Endpoints (Gateway)
+## Useful Scripts
 
-- `POST /api/v1/auth/request-otp`
-- `POST /api/v1/auth/verify-otp`
-- `POST /api/v1/auth/refresh`
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/patients/me/profile`
-- `GET /api/v1/patients/me/records`
-- `GET /api/v1/patients/me/records/{recordId}`
-- `GET /api/v1/doctors/{doctorId}/availability?start=&end=`
-- `POST /api/v1/appointments/hold`
-- `POST /api/v1/appointments/confirm`
-- `GET /api/v1/appointments/me`
-- `DELETE /api/v1/appointments/{appointmentId}`
+- `npm run dev`
+- `npm run dev:backend`
+- `npm run build`
+- `npm run typecheck`
+- `npm run test`
+- `npm run migrate`
+- `npm run seed`
+- `npm run compose:up`
+- `npm run compose:down`
 
-## Event Topics
+## Service Ports
 
-- `appointment.hold.created`
-- `appointment.confirmed`
-- `appointment.cancelled`
-- `doctor.availability.updated`
-- `medical_record.created`
-- `notification.requested`
-- `audit.event.logged`
-- DLQs use the topic suffix `.dlq`
+- `web`: `5173`
+- `auth-service`: `3001`
+- `patient-service`: `3002`
+- `doctor-service`: `3003`
+- `availability-service`: `3004`
+- `appointment-service`: `3005`
+- `medical-records-service`: `3006`
+- `realtime-service`: `3007`
+- `notification-service`: `3008`
+- `audit-service`: `3009`
+- `kong`: `8000`
 
-## Reliability and Scalability Highlights
+## API Areas Covered By The Gateway
 
-- Strict slot locking with Redis (`SET NX EX`) + DB transaction checks
-- Transactional outbox table for appointment event publishing
-- Consumer retries with exponential backoff and dead-letter topics
-- Redis read-through caching for availability (30s) and records (60s)
-- Idempotent confirm endpoint via `idempotency-key`
-- Horizontal Pod Autoscaler templates for all services
-- Terraform skeleton includes multi-AZ Aurora/Redis/MSK and AWS Backup vault plan
+- `POST /auth/patient/signup`
+- `POST /auth/patient/login`
+- `POST /auth/patient/forgot-password`
+- `GET /auth/patient/reset-password/:token`
+- `POST /auth/patient/reset-password`
+- `POST /auth/request-otp`
+- `POST /auth/verify-otp`
+- `GET /auth/google/url`
+- `POST /auth/google/exchange`
+- `GET /patients/me/profile`
+- `PATCH /patients/me/profile`
+- `GET /doctors`
+- `GET /doctors/:doctorId/availability`
+- `POST /appointments/hold`
+- `POST /appointments/confirm`
+- `GET /appointments/me`
+- `DELETE /appointments/:appointmentId`
+- `GET /patients/me/records`
+- `POST /patients/me/records`
+- `PATCH /patients/me/records/:recordId`
 
-## Security Baseline
+## Verification
 
-- JWT access + refresh tokens
-- OTP email login flow
-- Auth middleware supports bearer token and secure cookie flow
-- Audit logging for profile and records access events
-
-## Testing
-
-Run all tests:
+The repository includes unit tests for selected shared utilities and repository helpers. For a basic verification pass, run:
 
 ```bash
 npm run test
+npm run build
 ```
 
-Load test example (`k6` required):
+You can also run:
 
 ```bash
-k6 run ops/load-tests/appointments.js -e BASE_URL=http://localhost:8000/api/v1 -e ACCESS_TOKEN=<token>
+npm run typecheck
 ```
+
+## Sprint 3 Conclusion
+
+This repository matches the Sprint 3 project brief well for the patient portal journey. The main patient backlog items from Sprints 1 to 3 are present, and the repo also contains extra doctor and admin functionality that extends beyond the original sprint document.
