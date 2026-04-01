@@ -112,15 +112,66 @@ ops/
   load-tests/
 ```
 
+## Requirements
+
+### Required tools
+
+- Git
+- Node.js 22 or later is recommended
+- npm
+
+### Required for Docker-based setup
+
+- Docker Engine or Docker Desktop
+- Docker Compose
+
+Docker is required if you want to:
+
+- build the project images
+- run the full stack from `docker-compose.yml`
+- run the services in containers instead of directly with `npm`
+
+Without Docker, you cannot build Docker images. In that case, use the local development path below and run the required infrastructure yourself.
+
+### Required for local development without Docker images
+
+If you are not using Docker for the full stack, you still need these services available locally or from managed providers:
+
+- PostgreSQL 16
+- Redis 7
+- Kafka
+- Zookeeper if your local Kafka setup requires it
+- Mailpit or another SMTP server for email testing
+
+### Optional tools
+
+- `k6` for load testing in `ops/load-tests`
+
+## Running The Project
+
+Choose one of these two paths:
+
+- Docker setup: easiest way to run the whole stack locally
+- Local setup without Docker images: run the app with `npm` and provide your own Postgres, Redis, Kafka, and SMTP/Mailpit
+
 ## Quick Start With Docker
 
-### 1. Install dependencies
+### 1. Make sure Docker is installed
+
+Check that Docker and Docker Compose are available:
+
+```bash
+docker --version
+docker compose version
+```
+
+### 2. Install dependencies
 
 ```bash
 npm install --workspaces --include-workspace-root
 ```
 
-### 2. Start the full stack
+### 3. Start the full stack
 
 To start the stack with seeded demo data:
 
@@ -134,51 +185,98 @@ If you do not need demo data:
 npm run compose:up
 ```
 
-### 3. Open the local apps
+Compose will build the images automatically. You do not need to run `docker build` separately unless you want to build images manually.
+
+### 4. Open the local apps
 
 - Frontend: `http://localhost:5173`
 - API Gateway: `http://localhost:8000/api/v1`
 - Kong Admin API: `http://localhost:8001`
 - Mailpit Inbox: `http://localhost:8025`
 
-### 4. Demo notes
+### 5. Demo notes
 
 - With `SEED_DEMO_DATA=true`, `patient@example.com` is seeded as a patient profile.
 - The seeded patient is best accessed through OTP fallback on the login page unless you first set a password through the reset-password flow.
 - In non-production mode, the OTP request response includes `devOtp`, and the same email is also visible in Mailpit.
 - Google sign-in only works after `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `GOOGLE_OAUTH_REDIRECT_URI` are configured.
 
+### 6. Stop the stack
+
+```bash
+npm run compose:down
+```
+
+## Building Docker Images Manually
+
+Docker is required for these commands.
+
+Build the frontend image:
+
+```bash
+docker build -f Dockerfile.web .
+```
+
+Build a backend service image:
+
+```bash
+docker build --build-arg SERVICE_NAME=auth-service -f Dockerfile.service .
+```
+
 ## Local Development Without Docker For Every Service
 
-Start the infrastructure dependencies:
+### 1. Prepare environment variables
+
+The repository includes `.env.example`. For host-run local development, copy it to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Important:
+
+- `.env.example` uses `localhost` values and is intended for host-run local development
+- `docker-compose.yml` already provides container-friendly defaults for the Docker path
+- If you use a `.env` file with Docker Compose, do not leave database and service hosts as `localhost` unless that is really what you want
+
+### 2. Start infrastructure dependencies
+
+If you still want to use Docker just for dependencies:
 
 ```bash
 docker compose up -d postgres redis zookeeper kafka mailpit
 ```
 
-Install packages:
+If you do not have Docker at all, start PostgreSQL, Redis, Kafka, and Mailpit/SMTP by some other local or hosted means before continuing.
+
+### 3. Install packages
 
 ```bash
 npm install --workspaces --include-workspace-root
 ```
 
-Run migrations:
+### 4. Run migrations
 
 ```bash
 npm run migrate
 ```
 
-Optional demo seed:
+### 5. Optional demo seed
 
 ```bash
 npm run seed
 ```
 
-Start the frontend and backend workspaces:
+### 6. Start the frontend and backend workspaces
 
 ```bash
 npm run dev
 ```
+
+### 7. Open the app
+
+- Frontend: `http://localhost:5173`
+- Backend services: ports listed below
 
 ## Useful Scripts
 
