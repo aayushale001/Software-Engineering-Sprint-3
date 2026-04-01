@@ -1,0 +1,289 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-declarative-config
+data:
+  kong.yml: |
+    _format_version: "3.0"
+    _transform: true
+    services:
+      - name: auth-service
+        url: http://auth-service:3001
+        routes:
+          - name: auth-route
+            strip_path: false
+            paths:
+              - /api/v1/auth
+            methods:
+              - GET
+              - POST
+              - OPTIONS
+      - name: patient-service
+        url: http://patient-service:3002
+        routes:
+          - name: patient-route
+            strip_path: false
+            paths:
+              - /api/v1/patients/me/profile
+            methods:
+              - GET
+              - PATCH
+              - OPTIONS
+          - name: doctor-patient-profile-route
+            strip_path: false
+            paths:
+              - ~/api/v1/doctors/me/patients/[^/]+/profile$
+            methods:
+              - GET
+              - OPTIONS
+          - name: admin-patients-route
+            strip_path: false
+            paths:
+              - /api/v1/admin/patients
+            methods:
+              - GET
+              - PATCH
+              - OPTIONS
+          - name: admin-patient-profile-route
+            strip_path: false
+            paths:
+              - ~/api/v1/admin/patients/[^/]+/profile$
+            methods:
+              - GET
+              - OPTIONS
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+              cookie_names:
+                - access_token
+      - name: medical-records-service
+        url: http://medical-records-service:3006
+        routes:
+          - name: records-route
+            strip_path: false
+            paths:
+              - /api/v1/patients/me/records
+            methods:
+              - GET
+              - POST
+              - OPTIONS
+          - name: records-detail-route
+            strip_path: false
+            paths:
+              - ~/api/v1/patients/me/records/[^/]+$
+            methods:
+              - GET
+              - PATCH
+              - OPTIONS
+          - name: doctor-patient-records-route
+            strip_path: false
+            paths:
+              - ~/api/v1/doctors/me/patients/[^/]+/records$
+              - ~/api/v1/doctors/me/patients/[^/]+/records/[^/]+$
+            methods:
+              - GET
+              - OPTIONS
+          - name: admin-patient-records-route
+            strip_path: false
+            paths:
+              - ~/api/v1/admin/patients/[^/]+/records$
+              - ~/api/v1/admin/patients/[^/]+/records/[^/]+$
+            methods:
+              - GET
+              - OPTIONS
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+              cookie_names:
+                - access_token
+      - name: doctor-service-public
+        url: http://doctor-service:3003
+        routes:
+          - name: doctor-public-route
+            strip_path: false
+            paths:
+              - /api/v1/doctors
+      - name: doctor-service-protected
+        url: http://doctor-service:3003
+        routes:
+          - name: doctor-self-route
+            strip_path: false
+            paths:
+              - /api/v1/doctors/me
+            methods:
+              - GET
+              - PATCH
+              - PUT
+              - POST
+              - OPTIONS
+          - name: admin-doctor-route
+            strip_path: false
+            paths:
+              - /api/v1/admin/doctors
+            methods:
+              - GET
+              - PATCH
+              - PUT
+              - POST
+              - OPTIONS
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+              cookie_names:
+                - access_token
+      - name: availability-service
+        url: http://availability-service:3004
+        routes:
+          - name: availability-route
+            strip_path: false
+            paths:
+              - ~/api/v1/doctors/[^/]+/availability$
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+              cookie_names:
+                - access_token
+      - name: appointment-service
+        url: http://appointment-service:3005
+        routes:
+          - name: appointment-route
+            strip_path: false
+            paths:
+              - /api/v1/appointments
+          - name: doctor-appointment-route
+            strip_path: false
+            paths:
+              - /api/v1/doctors/me/appointments
+            methods:
+              - GET
+              - POST
+              - OPTIONS
+          - name: admin-appointment-route
+            strip_path: false
+            paths:
+              - /api/v1/admin/appointments
+            methods:
+              - GET
+              - POST
+              - OPTIONS
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+              cookie_names:
+                - access_token
+      - name: realtime-service
+        url: http://realtime-service:3007
+        routes:
+          - name: websocket-route
+            strip_path: false
+            paths:
+              - /ws
+            protocols:
+              - http
+              - https
+      - name: audit-service
+        url: http://audit-service:3009
+        routes:
+          - name: audit-route
+            strip_path: false
+            paths:
+              - /api/v1/admin/audit
+            methods:
+              - GET
+              - OPTIONS
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+              cookie_names:
+                - access_token
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 120
+          policy: local
+      - name: correlation-id
+        config:
+          header_name: x-request-id
+          generator: uuid
+          echo_downstream: true
+      - name: file-log
+        config:
+          path: /dev/stdout
+    consumers:
+      - username: patient-app
+        jwt_secrets:
+          - key: patient-auth
+            secret: super-secret-access-token-value
+            algorithm: HS256
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kong-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kong-gateway
+  template:
+    metadata:
+      labels:
+        app: kong-gateway
+    spec:
+      containers:
+        - name: kong
+          image: kong:3.8
+          ports:
+            - containerPort: 8000
+            - containerPort: 8001
+          env:
+            - name: KONG_DATABASE
+              value: "off"
+            - name: KONG_DECLARATIVE_CONFIG
+              value: /etc/kong/kong.yml
+            - name: KONG_PROXY_LISTEN
+              value: 0.0.0.0:8000
+            - name: KONG_ADMIN_LISTEN
+              value: 0.0.0.0:8001
+          volumeMounts:
+            - name: kong-config
+              mountPath: /etc/kong/kong.yml
+              subPath: kong.yml
+      volumes:
+        - name: kong-config
+          configMap:
+            name: kong-declarative-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-gateway
+spec:
+  selector:
+    app: kong-gateway
+  type: LoadBalancer
+  ports:
+    - name: proxy
+      port: 80
+      targetPort: 8000
+    - name: admin
+      port: 8001
+      targetPort: 8001

@@ -1,0 +1,133 @@
+openapi: 3.1.0
+info:
+  title: Hospital Management Platform API
+  version: 2.0.0
+servers:
+  - url: /api/v1
+paths:
+  /auth/request-otp:
+    post:
+      summary: Request a patient OTP
+  /auth/verify-otp:
+    post:
+      summary: Verify patient OTP and issue tokens
+  /auth/google/url:
+    get:
+      summary: Start patient Google OAuth
+  /auth/google/exchange:
+    post:
+      summary: Finish patient Google OAuth
+  /auth/staff/login:
+    post:
+      summary: Log in a doctor or admin
+  /auth/staff/invitations:
+    post:
+      summary: Create a doctor/admin invite
+  /auth/staff/invitations/accept:
+    post:
+      summary: Accept a staff invite and set password
+  /patients/me/profile:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Read patient profile
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update patient profile
+  /patients/me/records:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List patient records
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create patient record
+  /doctors:
+    get:
+      summary: List active doctors
+  /doctors/{doctorId}/availability:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List doctor availability slots
+  /doctors/me/profile:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Read doctor profile
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update doctor profile
+  /doctors/me/schedule:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Read weekly schedule and exceptions
+    put:
+      security:
+        - bearerAuth: []
+      summary: Replace weekly schedule
+  /doctors/me/exceptions:
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create a doctor schedule exception
+  /doctors/me/appointments:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List doctor appointments
+  /doctors/me/patients/{patientId}/profile:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Read an assigned patient profile
+  /doctors/me/patients/{patientId}/records:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Read records for an assigned patient
+  /appointments/hold:
+    post:
+      security:
+        - bearerAuth: []
+      summary: Hold an appointment slot
+  /appointments/confirm:
+    post:
+      security:
+        - bearerAuth: []
+      summary: Confirm an appointment
+  /appointments/me:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List patient appointments
+  /admin/doctors:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List doctors for admin
+  /admin/patients:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List patients for admin
+  /admin/appointments:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List appointments for admin
+  /admin/audit/logs:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Browse audit logs
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

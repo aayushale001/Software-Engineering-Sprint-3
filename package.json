@@ -1,0 +1,41 @@
+{
+  "name": "hospital-management-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev --workspace apps/web\" \"npm run dev --workspace services/auth-service\" \"npm run dev --workspace services/patient-service\" \"npm run dev --workspace services/doctor-service\" \"npm run dev --workspace services/availability-service\" \"npm run dev --workspace services/appointment-service\" \"npm run dev --workspace services/medical-records-service\" \"npm run dev --workspace services/notification-service\" \"npm run dev --workspace services/realtime-service\" \"npm run dev --workspace services/audit-service\"",
+    "dev:backend": "concurrently -k \"npm run dev --workspace services/auth-service\" \"npm run dev --workspace services/patient-service\" \"npm run dev --workspace services/doctor-service\" \"npm run dev --workspace services/availability-service\" \"npm run dev --workspace services/appointment-service\" \"npm run dev --workspace services/medical-records-service\" \"npm run dev --workspace services/notification-service\" \"npm run dev --workspace services/realtime-service\" \"npm run dev --workspace services/audit-service\"",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "migrate": "knex --knexfile infra/migrations/knexfile.cjs migrate:latest",
+    "migrate:rollback": "knex --knexfile infra/migrations/knexfile.cjs migrate:rollback",
+    "seed": "knex --knexfile infra/migrations/knexfile.cjs seed:run",
+    "compose:up": "docker compose up --build",
+    "compose:down": "docker compose down -v"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^22.13.10",
+    "@types/pg": "^8.18.0",
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.4.7",
+    "knex": "^3.1.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  },
+  "dependencies": {
+    "pg": "^8.13.3"
+  }
+}
