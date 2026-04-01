@@ -1,0 +1,66 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  font-family: var(--font-sans);
+  color: #101828;
+  background-color: #eef4fb;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(92, 184, 224, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(11, 122, 117, 0.1), transparent 26%),
+    linear-gradient(135deg, #f7fbff 0%, #edf5ff 48%, #e3f1ed 100%);
+}
+
+body {
+  @apply min-h-screen text-ink antialiased;
+  background: transparent;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.88), transparent 20%),
+    radial-gradient(circle at 85% 10%, rgba(255, 255, 255, 0.45), transparent 18%),
+    radial-gradient(circle at 80% 80%, rgba(151, 228, 222, 0.18), transparent 18%);
+  z-index: -1;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@layer base {
+  ::selection {
+    background: rgba(15, 76, 129, 0.18);
+    color: #0c2a45;
+  }
+
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    @apply transition duration-200 ease-out;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid rgba(11, 122, 117, 0.5);
+    outline-offset: 3px;
+  }
+}
